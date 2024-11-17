@@ -2,7 +2,6 @@ import {
   ApiCreatedResponse,
   ApiOperation,
   ApiOkResponse,
-  ApiNoContentResponse,
 } from '@nestjs/swagger';
 import { EventService } from './event.service';
 import {
@@ -16,7 +15,6 @@ import {
 } from '@nestjs/common';
 import { EventDto, EventListDto } from './dto/event.dto';
 import { CreateEventPayload } from './payload/create-event.payload';
-import { EventJoinPayload } from './payload/event-join.payload';
 import { EventListQuery } from './query/event-list.query';
 
 @Controller('events')
@@ -45,15 +43,5 @@ export class EventController {
   async getEvents(@Query() query: EventListQuery): Promise<EventListDto> {
     console.log(query);
     return this.eventService.getEvents(query);
-  }
-
-  @Post(':eventID/join')
-  @ApiOperation({ summary: 'user가 특정 모임에 참가합니다.' })
-  @ApiNoContentResponse() // 204
-  async joinEvent(
-    @Param('eventID', ParseIntPipe) eventID: number,
-    @Body() payload: EventJoinPayload,
-  ): Promise<void> {
-    return this.eventService.joinEvent(eventID, payload.userId);
   }
 }
