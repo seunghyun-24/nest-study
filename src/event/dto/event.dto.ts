@@ -1,4 +1,4 @@
-mport { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { EventData } from '../type/event-data.type';
 
 export class EventDto {
