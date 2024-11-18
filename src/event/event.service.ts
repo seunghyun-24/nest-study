@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,6 +9,7 @@ import { CreateEventData } from './type/create-event-data.type';
 import { EventDto, EventListDto } from './dto/event.dto';
 import { EventRepository } from './event.repository';
 import { EventListQuery } from './query/event-list.query';
+import { EventUpdatePayload } from './payload/event-update.payload';
 
 @Injectable()
 export class EventService {
@@ -95,6 +97,7 @@ export class EventService {
     }
 
     await this.eventRepository.joinUserToEvent({ eventID, userID });
+
   }
 
   async outEvent(eventID: number, userID: number): Promise<void> {
@@ -105,6 +108,7 @@ export class EventService {
     const event = await this.eventRepository.getEventById(eventID);
     if (!event) {
       throw new NotFoundException('해당 Event가 존재하지 않습니다.');
+
     }
     if (event.startTime < new Date()) {
       throw new BadRequestException(
@@ -119,7 +123,6 @@ export class EventService {
     ) {
       throw new BadRequestException('참가하지 않은 Event입니다.');
     }
-
     await this.eventRepository.outUserFromEvent({ eventID, userID });
   }
 
