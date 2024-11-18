@@ -58,6 +58,7 @@ export class EventController {
     @Body() payload: EventJoinPayload,
   ): Promise<void> {
     return this.eventService.joinEvent(eventID, payload.userId);
+  }
       
   @Post(':eventID/out')
   @ApiOperation({ summary: 'user가 특정 모임에서 탈퇴합니다.' })
