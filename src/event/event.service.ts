@@ -97,7 +97,6 @@ export class EventService {
     }
 
     await this.eventRepository.joinUserToEvent({ eventID, userID });
-
   }
 
   async outEvent(eventID: number, userID: number): Promise<void> {
@@ -108,7 +107,6 @@ export class EventService {
     const event = await this.eventRepository.getEventById(eventID);
     if (!event) {
       throw new NotFoundException('해당 Event가 존재하지 않습니다.');
-
     }
     if (event.startTime < new Date()) {
       throw new BadRequestException(
