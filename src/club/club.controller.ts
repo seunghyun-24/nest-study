@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Param,
   ParseIntPipe,
   Post,
@@ -15,6 +16,7 @@ import {
   ApiOperation,
   ApiOkResponse,
   ApiTags,
+  ApiNoContentResponse,
 } from '@nestjs/swagger';
 import { CreateClubPayload } from './payload/create-club.payload';
 import { UpdateClubPayload } from './payload/update-club.payload';
@@ -82,5 +84,18 @@ export class ClubController {
     @CurrentUser() user: UserBaseInfo,
   ): Promise<ClubDto> {
     return this.clubService.updateClub(clubId, payload, user);
+  }
+
+  @Post('clubId/join')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '클럽에 가입 신청합니다' })
+  @ApiNoContentResponse()
+  @HttpCode(204)
+  async joinClub(
+    @Param('clubId', ParseIntPipe) clubId: number,
+    @CurrentUser() user: UserBaseInfo,
+  ): Promise<void> {
+    await this.clubService.joinClub(clubId, user);
   }
 }

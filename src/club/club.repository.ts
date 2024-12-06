@@ -211,4 +211,22 @@ export class ClubRepository {
       })),
     };
   }
+
+  async joinClub(userId: number, clubId: number): Promise<void> {
+    await this.prisma.clubJoin.create({
+      data: {
+        userId,
+        clubId,
+        status: ClubJoinStatus.APPLICANT,
+      },
+      select: {
+        id: true,
+        clubId: true,
+        userId: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
 }
