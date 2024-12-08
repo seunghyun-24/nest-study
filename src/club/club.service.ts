@@ -81,10 +81,12 @@ export class ClubService {
   }
 
   async handleApplicant(
+    clubId: number,
+    userId: number,
     payload: HandleApplicantPayload,
     user: UserBaseInfo,
   ): Promise<void> {
-    const club = await this.clubRepository.getClubById(payload.clubId);
+    const club = await this.clubRepository.getClubById(clubId);
     if (!club) {
       throw new NotFoundException('해당 클럽이 존재하지 않습니다.');
     }
@@ -92,25 +94,21 @@ export class ClubService {
       throw new BadRequestException('클럽 리더만 수정할 수 있습니다.');
     }
 
-    const isUserExist = await this.clubRepository.validateUsersExist(
-      payload.userId,
-    );
+    const isUserExist = await this.clubRepository.validateUsersExist(userId);
     if (!isUserExist) {
       throw new BadRequestException('멤버 ID가 유효한 user가 아닙니다.');
     }
 
     if (payload.decision === AcceptRejectDecision.ACCEPT) {
-      const clubCount = await this.clubRepository.getClubMembersCount(
-        payload.clubId,
-      );
+      const clubCount = await this.clubRepository.getClubMembersCount(clubId);
       if (club.maxPeople <= clubCount) {
         throw new ConflictException('클럽 인원이 가득 찼습니다.');
       }
     }
 
     const nowStatus = await this.clubRepository.getClubMemberStatus(
-      payload.clubId,
-      payload.userId,
+      clubId,
+      userId,
     );
     if (nowStatus !== ClubJoinStatus.APPLICANT) {
       throw new ConflictException('클럽 가입 신청자가 아닙니다.');
@@ -118,15 +116,15 @@ export class ClubService {
 
     if (payload.decision === AcceptRejectDecision.ACCEPT) {
       return await this.clubRepository.updateMemberStatus(
-        payload.clubId,
-        payload.userId,
+        clubId,
+        userId,
         ClubJoinStatus.MEMBER,
       );
     }
     if (payload.decision === AcceptRejectDecision.REJECT) {
       return await this.clubRepository.updateMemberStatus(
-        payload.clubId,
-        payload.userId,
+        clubId,
+        userId,
         ClubJoinStatus.REJECTED,
       );
     }

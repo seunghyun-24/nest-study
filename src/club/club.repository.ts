@@ -201,9 +201,19 @@ export class ClubRepository {
       },
       select: {
         status: true,
+        user: {
+          select: {
+            deletedAt: true,
+          },
+        },
       },
     });
-    return member?.status ?? null;
+
+    if (member?.user?.deletedAt === null) {
+      return member.status;
+    }
+
+    return null;
   }
 
   async updateMemberStatus(

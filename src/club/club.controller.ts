@@ -85,10 +85,12 @@ export class ClubController {
   @ApiOperation({ summary: '가입 신청 유저를 [승인/거절]합니다' })
   @ApiOkResponse({ description: '가입 신청 유저를 [승인/거절]했습니다.' })
   async handleApplicant(
+    @Param('clubId', ParseIntPipe) clubId: number,
+    @Param('memberId', ParseIntPipe) memberId: number,
     @Body() payload: HandleApplicantPayload,
     @CurrentUser() user: UserBaseInfo,
   ): Promise<void> {
-    return this.clubService.handleApplicant(payload, user);
+    return this.clubService.handleApplicant(clubId, memberId, payload, user);
   }
 
   @Post(':clubId')
