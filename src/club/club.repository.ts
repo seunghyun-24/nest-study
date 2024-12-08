@@ -225,27 +225,27 @@ export class ClubRepository {
   }
 
   async outClub(clubId: number, userId: number): Promise<void> {
+    const now = new Date();
     await this.prisma.$transaction([
       this.prisma.eventJoin.deleteMany({
         where: {
-          OR: [
-            {
-              event: {
-                hostId: userId,
-                startTime: {
-                  gt: new Date(),
-                },
-              },
+          userId,
+          event: {
+            clubId,
+            startTime: {
+              gt: now,
             },
-            {
-              userId,
-              event: {
-                startTime: {
-                  gt: new Date(),
-                },
-              },
-            },
-          ],
+          },
+        },
+      }),
+
+      this.prisma.event.deleteMany({
+        where: {
+          hostId: userId,
+          clubId,
+          startTime: {
+            gt: now,
+          },
         },
       }),
 
@@ -253,27 +253,18 @@ export class ClubRepository {
         where: {
           event: {
             hostId: userId,
+            clubId,
             startTime: {
-              gt: new Date(),
+              gt: now,
             },
           },
         },
       }),
-      this.prisma.event.deleteMany({
-        where: {
-          hostId: userId,
-          startTime: {
-            gt: new Date(),
-          },
-        },
-      }),
 
-      this.prisma.clubJoin.delete({
+      this.prisma.clubJoin.deleteMany({
         where: {
-          clubId_userId: {
-            clubId,
-            userId,
-          },
+          userId,
+          clubId,
         },
       }),
     ]);
