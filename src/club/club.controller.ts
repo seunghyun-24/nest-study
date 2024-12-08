@@ -10,6 +10,7 @@ import {
   UseGuards,
   ValidationPipe,
   Query,
+  Patch,
 } from '@nestjs/common';
 import { ClubService } from './club.service';
 import {
@@ -22,6 +23,7 @@ import {
 } from '@nestjs/swagger';
 import { CreateClubPayload } from './payload/create-club.payload';
 import { UpdateClubPayload } from './payload/update-club.payload';
+import { HandleApplicantPayload } from './payload/accept-reject-member.payload';
 import { ClubDto, ClubListDto } from './dto/club.dto';
 import { ClubMemberListDto } from './dto/club-member.dto';
 import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
@@ -74,6 +76,21 @@ export class ClubController {
       query.status,
     );
     return ClubMemberListDto.from(members);
+  }
+
+  @Patch(':clubId/members/:memberId/status')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(204)
+  @ApiOperation({ summary: '가입 신청 유저를 [승인/거절]합니다' })
+  @ApiOkResponse({ description: '가입 신청 유저를 [승인/거절]했습니다.' })
+  async handleApplicant(
+    @Param('clubId', ParseIntPipe) clubId: number,
+    @Param('memberId', ParseIntPipe) memberId: number,
+    @Body() payload: HandleApplicantPayload,
+    @CurrentUser() user: UserBaseInfo,
+  ): Promise<void> {
+    return this.clubService.handleApplicant(clubId, memberId, payload, user);
   }
 
   @Post(':clubId')

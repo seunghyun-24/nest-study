@@ -7,6 +7,7 @@ import {
 import { ClubRepository } from './club.repository';
 import { CreateClubPayload } from './payload/create-club.payload';
 import { UpdateClubPayload } from './payload/update-club.payload';
+import { HandleApplicantPayload } from './payload/accept-reject-member.payload';
 import { CreateClubData } from './type/create-club-data.type';
 import { UpdateClubData } from './type/update-club-data.type';
 import { ClubDto, ClubListDto } from './dto/club.dto';
@@ -14,6 +15,7 @@ import { ClubMemberDto } from './dto/club-member.dto';
 import { UserBaseInfo } from '../auth/type/user-base-info.type';
 import { EventService } from '../event/event.service';
 import { ClubJoinStatus } from '@prisma/client';
+import { AcceptRejectDecision } from './payload/accept-reject-member.payload';
 
 @Injectable()
 export class ClubService {
@@ -76,6 +78,56 @@ export class ClubService {
       status,
     );
     return ClubMemberDto.fromArray(members);
+  }
+
+  async handleApplicant(
+    clubId: number,
+    userId: number,
+    payload: HandleApplicantPayload,
+    user: UserBaseInfo,
+  ): Promise<void> {
+    const club = await this.clubRepository.getClubById(clubId);
+    if (!club) {
+      throw new NotFoundException('해당 클럽이 존재하지 않습니다.');
+    }
+    if (club.leaderId !== user.id) {
+      throw new BadRequestException('클럽 리더만 수정할 수 있습니다.');
+    }
+
+    const isUserExist = await this.clubRepository.validateUsersExist(userId);
+    if (!isUserExist) {
+      throw new BadRequestException('멤버 ID가 유효한 user가 아닙니다.');
+    }
+
+    if (payload.decision === AcceptRejectDecision.ACCEPT) {
+      const clubCount = await this.clubRepository.getClubMembersCount(clubId);
+      if (club.maxPeople <= clubCount) {
+        throw new ConflictException('클럽 인원이 가득 찼습니다.');
+      }
+    }
+
+    const nowStatus = await this.clubRepository.getClubMemberStatus(
+      clubId,
+      userId,
+    );
+    if (nowStatus !== ClubJoinStatus.APPLICANT) {
+      throw new ConflictException('클럽 가입 신청자가 아닙니다.');
+    }
+
+    if (payload.decision === AcceptRejectDecision.ACCEPT) {
+      return await this.clubRepository.updateMemberStatus(
+        clubId,
+        userId,
+        ClubJoinStatus.MEMBER,
+      );
+    }
+    if (payload.decision === AcceptRejectDecision.REJECT) {
+      return await this.clubRepository.updateMemberStatus(
+        clubId,
+        userId,
+        ClubJoinStatus.REJECTED,
+      );
+    }
   }
 
   async updateClub(
