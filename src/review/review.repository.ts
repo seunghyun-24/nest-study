@@ -79,6 +79,22 @@ export class ReviewRepository {
     return !!event;
   }
 
+  async isUserJoinedClub(userId: number, clubId: number): Promise<boolean> {
+    const clubExist = await this.prisma.clubJoin.findUnique({
+      where: {
+        clubId_userId: {
+          clubId,
+          userId,
+        },
+        user: {
+          deletedAt: null,
+        },
+      },
+    });
+
+    return !!clubExist;
+  }
+
   async getReviewById(reviewId: number): Promise<ReviewData | null> {
     return this.prisma.review.findUnique({
       where: {
