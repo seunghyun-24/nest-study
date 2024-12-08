@@ -239,6 +239,8 @@ export class ClubRepository {
         createdAt: true,
         updatedAt: true,
       },
+    });
+  }
 
   async deleteClubWithEvents(clubId: number): Promise<void> {
     const events = await this.prisma.event.findMany({
