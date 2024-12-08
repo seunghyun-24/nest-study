@@ -231,14 +231,6 @@ export class ClubRepository {
         clubId,
         status: ClubJoinStatus.APPLICANT,
       },
-      select: {
-        id: true,
-        clubId: true,
-        userId: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     });
   }
 
