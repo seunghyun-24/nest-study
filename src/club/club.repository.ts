@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
 import { CreateClubData } from './type/create-club-data.type';
 import { ClubData } from './type/club-data.type';
@@ -278,6 +278,7 @@ export class ClubRepository {
       }),
     ]);
   }
+
   async deleteClubWithEvents(clubId: number): Promise<void> {
     const events = await this.prisma.event.findMany({
       where: { clubId },

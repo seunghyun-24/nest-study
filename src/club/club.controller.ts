@@ -10,7 +10,6 @@ import {
   UseGuards,
   ValidationPipe,
   Query,
-  HttpCode,
 } from '@nestjs/common';
 import { ClubService } from './club.service';
 import {
@@ -20,7 +19,6 @@ import {
   ApiOkResponse,
   ApiNoContentResponse,
   ApiTags,
-  ApiNoContentResponse,
 } from '@nestjs/swagger';
 import { CreateClubPayload } from './payload/create-club.payload';
 import { UpdateClubPayload } from './payload/update-club.payload';
@@ -102,7 +100,6 @@ export class ClubController {
     @CurrentUser() user: UserBaseInfo,
   ): Promise<void> {
     return this.clubService.outClub(clubId, user);
-
   }
   @Delete(':clubId')
   @UseGuards(JwtAuthGuard)
