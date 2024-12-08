@@ -224,6 +224,16 @@ export class ClubRepository {
     };
   }
 
+  async joinClub(userId: number, clubId: number): Promise<void> {
+    await this.prisma.clubJoin.create({
+      data: {
+        userId,
+        clubId,
+        status: ClubJoinStatus.APPLICANT,
+      },
+    });
+  }
+
   async deleteClubWithEvents(clubId: number): Promise<void> {
     const events = await this.prisma.event.findMany({
       where: { clubId },
