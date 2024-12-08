@@ -29,4 +29,13 @@ export class EventListQuery {
     type: Number,
   })
   categoryId?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  @ApiPropertyOptional({
+    description: 'club ID',
+    type: Number,
+  })
+  clubId?: number;
 }

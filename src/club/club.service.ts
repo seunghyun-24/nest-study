@@ -12,11 +12,15 @@ import { UpdateClubData } from './type/update-club-data.type';
 import { ClubDto, ClubListDto } from './dto/club.dto';
 import { ClubMemberDto } from './dto/club-member.dto';
 import { UserBaseInfo } from '../auth/type/user-base-info.type';
+import { EventService } from '../event/event.service';
 import { ClubJoinStatus } from '@prisma/client';
 
 @Injectable()
 export class ClubService {
-  constructor(private readonly clubRepository: ClubRepository) {}
+  constructor(
+    private readonly clubRepository: ClubRepository,
+    private readonly eventService: EventService,
+  ) {}
 
   async createClub(
     payload: CreateClubPayload,
@@ -148,6 +152,7 @@ export class ClubService {
     return ClubDto.from(updatedClub);
   }
 
+
   async outClub(clubId: number, user: UserBaseInfo): Promise<void> {
     const club = await this.clubRepository.getClubById(clubId);
 
@@ -167,5 +172,21 @@ export class ClubService {
     }
 
     await this.clubRepository.outClub(clubId, user.id);
+  }
+  
+  async deleteClubWithEvents(
+    clubId: number,
+    user: UserBaseInfo,
+  ): Promise<void> {
+    const club = await this.clubRepository.getClubById(clubId);
+    if (!club) {
+      throw new NotFoundException('해당 클럽이 존재하지 않습니다.');
+    }
+    if (club.leaderId !== user.id) {
+      throw new ConflictException('클럽 리더만 수정할 수 있습니다.');
+    }
+
+    // 클럽에 속한 이벤트가 시작한 게 없으면, 정상적으로 삭제가 이뤄집니다.
+    await this.clubRepository.deleteClubWithEvents(clubId);
   }
 }
