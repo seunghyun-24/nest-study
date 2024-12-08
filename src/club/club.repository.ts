@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
 import { CreateClubData } from './type/create-club-data.type';
 import { ClubData } from './type/club-data.type';
@@ -17,10 +17,10 @@ export class ClubRepository {
         leaderId: data.leaderId,
         maxPeople: data.maxPeople,
         clubJoin: {
-          create: {
-            userId: data.leaderId,
-            status: ClubJoinStatus.MEMBER,
-          },
+          create: data.members.map((member) => ({
+            userId: member.userId,
+            status: member.status,
+          })),
         },
       },
       select: {
@@ -48,6 +48,18 @@ export class ClubRepository {
         status: join.status,
       })),
     };
+  }
+
+  async validateUsersExist(userIds: number | number[]): Promise<boolean> {
+    const ids = Array.isArray(userIds) ? userIds : [userIds];
+    const users = await this.prisma.user.findMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+    return users.length === ids.length;
   }
 
   async getUserIsClubMember(userId: number, clubId: number): Promise<boolean> {
@@ -227,6 +239,54 @@ export class ClubRepository {
         createdAt: true,
         updatedAt: true,
       },
+
+  async deleteClubWithEvents(clubId: number): Promise<void> {
+    const events = await this.prisma.event.findMany({
+      where: { clubId },
+    });
+
+    const now = new Date();
+    const upcomingEvents = events.filter((event) => event.startTime >= now);
+    const startedEvents = events.filter((event) => event.startTime < now);
+
+    const upcomingEventIds = upcomingEvents.map((event) => event.id);
+    await this.prisma.$transaction(async (prisma) => {
+      if (upcomingEventIds.length > 0) {
+        await prisma.eventCity.deleteMany({
+          where: {
+            eventId: { in: upcomingEventIds },
+          },
+        });
+        await prisma.eventJoin.deleteMany({
+          where: {
+            eventId: { in: upcomingEventIds },
+          },
+        });
+        await prisma.event.deleteMany({
+          where: {
+            id: { in: upcomingEventIds },
+          },
+        });
+      }
+
+      if (startedEvents.length > 0) {
+        await prisma.event.updateMany({
+          where: {
+            id: { in: startedEvents.map((event) => event.id) },
+          },
+          data: {
+            archived: true, // TODO : 아카이빙 처리 후 나중에 조회 함수 서술 필요 (기존 함수 수정 필요)
+            clubId: null, // NOTE :  FK 제약 조건 해결을 위해 clubId를 null로 설정
+          },
+        });
+      }
+
+      await prisma.clubJoin.deleteMany({
+        where: { clubId },
+      });
+      await prisma.club.delete({
+        where: { id: clubId },
+      });
     });
   }
 }

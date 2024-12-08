@@ -61,6 +61,7 @@ model Event {
   maxPeople   Int      @map("max_people")
   startTime   DateTime @map("start_time")
   endTime     DateTime @map("end_time")
+  archived    Boolean  @default(false)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

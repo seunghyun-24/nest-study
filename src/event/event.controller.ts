@@ -17,7 +17,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { EventDto, EventListDto } from './dto/event.dto';
+import { EventDto, EventListDto, ClubEventListDto } from './dto/event.dto';
 import { CreateEventPayload } from './payload/create-event.payload';
 import { EventJoinPayload } from './payload/event-join.payload';
 import { EventOutPayload } from './payload/event-out.payload';
@@ -92,4 +92,13 @@ export class EventController {
   ): Promise<void> {
     return this.eventService.deleteEvent(eventId);
   }
+
+  // @Get('clubs/:clubId/events')
+  // @ApiOperation({ summary: '클럽 전용 이벤트 목록 조회' })
+  // @ApiOkResponse({ type: ClubEventListDto })
+  // async getClubEvents(
+  //   @Param('clubId', ParseIntPipe) clubId: number,
+  // ): Promise<ClubEventListDto> {
+  //   return this.eventService.getClubEvents(clubId);
+  // }
 }

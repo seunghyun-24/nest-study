@@ -37,5 +37,5 @@ export class CreateClubPayload {
     description: '클럽 멤버원 ID 명단',
     type: [Number],
   })
-  members!: number[];
+  memberIds!: number[];
 }

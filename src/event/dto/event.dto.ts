@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EventData } from '../type/event-data.type';
 
 export class EventDto {
@@ -56,6 +56,13 @@ export class EventDto {
   })
   maxPeople!: number;
 
+  @ApiPropertyOptional({
+    description: '클럽 ID (클럽 전용 이벤트일 경우)',
+    type: Number,
+    nullable: true,
+  })
+  clubId!: number | null;
+
   static from(event: EventData): EventDto {
     return {
       id: event.id,
@@ -67,6 +74,7 @@ export class EventDto {
       startTime: event.startTime,
       endTime: event.endTime,
       maxPeople: event.maxPeople,
+      clubId: event.clubId,
     };
   }
 
@@ -85,6 +93,20 @@ export class EventListDto {
   static from(events: EventData[]): EventListDto {
     return {
       events: EventDto.fromArray(events),
+    };
+  }
+}
+export class ClubEventListDto {
+  @ApiProperty({
+    description: '클럽 전용 이벤트 목록',
+    type: [EventDto],
+  })
+  events!: EventDto[];
+
+  static from(events: EventData[]): ClubEventListDto {
+    const clubEvents = events.filter((event) => event.clubId !== null);
+    return {
+      events: EventDto.fromArray(clubEvents),
     };
   }
 }

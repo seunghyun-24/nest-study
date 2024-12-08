@@ -1,12 +1,14 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
   ParseIntPipe,
   Post,
   UseGuards,
+  ValidationPipe,
   Query,
 } from '@nestjs/common';
 import { ClubService } from './club.service';
@@ -15,16 +17,18 @@ import {
   ApiCreatedResponse,
   ApiOperation,
   ApiOkResponse,
+  ApiNoContentResponse,
   ApiTags,
   ApiNoContentResponse,
 } from '@nestjs/swagger';
 import { CreateClubPayload } from './payload/create-club.payload';
 import { UpdateClubPayload } from './payload/update-club.payload';
-import { ClubDto, ClubListDto, ClubMemberDto } from './dto/club.dto';
+import { ClubDto, ClubListDto } from './dto/club.dto';
+import { ClubMemberListDto } from './dto/club-member.dto';
 import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorator/user.decorator';
 import { UserBaseInfo } from '../auth/type/user-base-info.type';
-import { ClubJoinStatus } from '@prisma/client';
+import { ClubJoinStatusQuery } from './query/club-join-status.query';
 
 @Controller('clubs')
 @ApiTags('Club API')
@@ -60,17 +64,17 @@ export class ClubController {
   }
 
   @Get(':clubId/members')
-  @ApiOperation({ summary: '클럽 멤버 정보를 조회합니다' })
-  @ApiOkResponse({ type: ClubMemberDto })
+  @ApiOperation({ summary: '클럽 [멤버 정보/신청자/거절자]를 조회합니다' })
+  @ApiOkResponse({ type: ClubMemberListDto })
   async getClubMembers(
     @Param('clubId', ParseIntPipe) clubId: number,
-    @Query('status') status: ClubJoinStatus,
-  ): Promise<ClubMemberDto[]> {
+    @Query(new ValidationPipe({ transform: true })) query: ClubJoinStatusQuery,
+  ): Promise<ClubMemberListDto> {
     const members = await this.clubService.getClubMembersByStatus(
       clubId,
-      status,
+      query.status,
     );
-    return ClubMemberDto.fromArray(members);
+    return ClubMemberListDto.from(members);
   }
 
   @Post(':clubId')
@@ -97,5 +101,18 @@ export class ClubController {
     @CurrentUser() user: UserBaseInfo,
   ): Promise<void> {
     await this.clubService.joinClub(clubId, user);
+
+  @Delete(':clubId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(204)
+  @ApiOperation({ summary: '클럽을 삭제합니다.' })
+  @ApiNoContentResponse()
+  async deleteClub(
+    @Param('clubId', ParseIntPipe) clubId: number,
+    @CurrentUser() user: UserBaseInfo,
+  ): Promise<void> {
+    return this.clubService.deleteClubWithEvents(clubId, user);
+
   }
 }

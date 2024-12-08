@@ -1,9 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
   IsDate,
   IsInt,
+  IsOptional,
   IsString,
   Min,
   ArrayMinSize,
@@ -70,4 +71,12 @@ export class CreateEventPayload {
     type: Number,
   })
   maxPeople!: number;
+
+  @IsInt()
+  @ApiPropertyOptional({
+    description: '클럽 ID (클럽 전용 이벤트일 경우)',
+    type: Number,
+    nullable: true,
+  })
+  clubId!: number;
 }
