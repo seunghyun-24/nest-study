@@ -192,10 +192,12 @@ export class ClubRepository {
     clubId: number,
     userId: number,
   ): Promise<ClubJoinStatus | null> {
-    const member = await this.prisma.clubJoin.findFirst({
+    const member = await this.prisma.clubJoin.findUnique({
       where: {
-        clubId,
-        userId,
+        clubId_userId: {
+          clubId,
+          userId,
+        },
       },
       select: {
         status: true,

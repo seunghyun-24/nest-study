@@ -89,7 +89,7 @@ export class ClubService {
       throw new NotFoundException('해당 클럽이 존재하지 않습니다.');
     }
     if (club.leaderId !== user.id) {
-      throw new ConflictException('클럽 리더만 수정할 수 있습니다.');
+      throw new BadRequestException('클럽 리더만 수정할 수 있습니다.');
     }
 
     const isUserExist = await this.clubRepository.validateUsersExist(

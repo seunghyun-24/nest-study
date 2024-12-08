@@ -10,6 +10,7 @@ import {
   UseGuards,
   ValidationPipe,
   Query,
+  Patch,
 } from '@nestjs/common';
 import { ClubService } from './club.service';
 import {
@@ -77,7 +78,7 @@ export class ClubController {
     return ClubMemberListDto.from(members);
   }
 
-  @Post(':clubId/members/:memberId')
+  @Patch(':clubId/members/:memberId/status')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(204)
