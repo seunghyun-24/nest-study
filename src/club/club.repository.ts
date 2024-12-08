@@ -223,7 +223,7 @@ export class ClubRepository {
       })),
     };
   }
-  
+
   async joinClub(userId: number, clubId: number): Promise<void> {
     await this.prisma.clubJoin.create({
       data: {
@@ -233,7 +233,7 @@ export class ClubRepository {
       },
     });
   }
-  
+
   async outClub(clubId: number, userId: number): Promise<void> {
     const now = new Date();
     await this.prisma.$transaction([

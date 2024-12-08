@@ -151,7 +151,7 @@ export class ClubService {
 
     return ClubDto.from(updatedClub);
   }
-  
+
   async joinClub(clubId: number, user: UserBaseInfo): Promise<void> {
     const club = await this.clubRepository.getClubById(clubId);
     if (!club) {
