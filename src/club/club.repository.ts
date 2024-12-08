@@ -259,7 +259,6 @@ export class ClubRepository {
           },
         },
       }),
-
       this.prisma.event.deleteMany({
         where: {
           hostId: userId,
