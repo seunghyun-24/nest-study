@@ -152,7 +152,6 @@ export class ClubService {
     return ClubDto.from(updatedClub);
   }
 
-
   async outClub(clubId: number, user: UserBaseInfo): Promise<void> {
     const club = await this.clubRepository.getClubById(clubId);
 
@@ -173,7 +172,7 @@ export class ClubService {
 
     await this.clubRepository.outClub(clubId, user.id);
   }
-  
+
   async deleteClubWithEvents(
     clubId: number,
     user: UserBaseInfo,
