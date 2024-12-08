@@ -223,7 +223,17 @@ export class ClubRepository {
       })),
     };
   }
-
+  
+  async joinClub(userId: number, clubId: number): Promise<void> {
+    await this.prisma.clubJoin.create({
+      data: {
+        userId,
+        clubId,
+        status: ClubJoinStatus.APPLICANT,
+      },
+    });
+  }
+  
   async outClub(clubId: number, userId: number): Promise<void> {
     const now = new Date();
     await this.prisma.$transaction([

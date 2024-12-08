@@ -89,6 +89,19 @@ export class ClubController {
     return this.clubService.updateClub(clubId, payload, user);
   }
 
+  @Post('clubId/join')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '클럽에 가입 신청합니다' })
+  @ApiNoContentResponse()
+  @HttpCode(204)
+  async joinClub(
+    @Param('clubId', ParseIntPipe) clubId: number,
+    @CurrentUser() user: UserBaseInfo,
+  ): Promise<void> {
+    await this.clubService.joinClub(clubId, user);
+  }
+
   @Post(':clubId/out')
   @HttpCode(204)
   @UseGuards(JwtAuthGuard)
@@ -101,6 +114,7 @@ export class ClubController {
   ): Promise<void> {
     return this.clubService.outClub(clubId, user);
   }
+  
   @Delete(':clubId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
