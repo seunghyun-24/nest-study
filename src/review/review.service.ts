@@ -13,7 +13,6 @@ import { UpdateReviewData } from './type/update-review-data.type';
 import { PutUpdateReviewPayload } from './payload/put-update-review.payload';
 import { PatchUpdateReviewPayload } from './payload/patch-update-review.payload';
 import { UserBaseInfo } from '../auth/type/user-base-info.type';
-import { ReviewData } from './type/review-data.type';
 
 @Injectable()
 export class ReviewService {
