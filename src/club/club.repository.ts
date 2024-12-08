@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
 import { CreateClubData } from './type/create-club-data.type';
 import { ClubData } from './type/club-data.type';
@@ -232,6 +232,52 @@ export class ClubRepository {
         status: ClubJoinStatus.APPLICANT,
       },
     });
+  }
+
+  async outClub(clubId: number, userId: number): Promise<void> {
+    const now = new Date();
+    await this.prisma.$transaction([
+      this.prisma.eventJoin.deleteMany({
+        where: {
+          userId,
+          event: {
+            clubId,
+            startTime: {
+              gt: now,
+            },
+          },
+        },
+      }),
+
+      this.prisma.event.deleteMany({
+        where: {
+          hostId: userId,
+          clubId,
+          startTime: {
+            gt: now,
+          },
+        },
+      }),
+
+      this.prisma.eventCity.deleteMany({
+        where: {
+          event: {
+            hostId: userId,
+            clubId,
+            startTime: {
+              gt: now,
+            },
+          },
+        },
+      }),
+
+      this.prisma.clubJoin.deleteMany({
+        where: {
+          userId,
+          clubId,
+        },
+      }),
+    ]);
   }
 
   async deleteClubWithEvents(clubId: number): Promise<void> {

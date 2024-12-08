@@ -102,6 +102,19 @@ export class ClubController {
     await this.clubService.joinClub(clubId, user);
   }
 
+  @Post(':clubId/out')
+  @HttpCode(204)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '클럽 탈퇴' })
+  @ApiNoContentResponse()
+  async leaveClub(
+    @Param('clubId', ParseIntPipe) clubId: number,
+    @CurrentUser() user: UserBaseInfo,
+  ): Promise<void> {
+    return this.clubService.outClub(clubId, user);
+  }
+
   @Delete(':clubId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
