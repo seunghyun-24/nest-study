@@ -112,34 +112,23 @@ export class ReviewService {
     reviews: ReviewData[],
     user: UserBaseInfo,
   ): Promise<ReviewData[]> {
+    // 유저가 지금까지 참여한 모든 이벤트 조회
+    const userJoinedEvents = new Set(
+      await this.reviewRepository.getEventIdsOfUser(user.id),
+    );
+
+    const userJoinedClubs = new Set(
+      await this.reviewRepository.getClubIdsOfUser(user.id),
+    );
+
     const eventIds = [...new Set(reviews.map((review) => review.eventId))];
-    const [events, userJoinedClubs] = await Promise.all([
-      this.reviewRepository.getEventsByEventIds(eventIds),
-      this.reviewRepository.getClubIdsOfUser(user.id),
-    ]);
-
-    const now = new Date();
-    const deletedStartedEventIds = events
-      .filter((event) => event.clubId && event.startTime < now)
-      .map((event) => event.id);
-
-    let userJoinedEventIds: number[] = [];
-
-    if (deletedStartedEventIds) {
-      userJoinedEventIds = await this.reviewRepository.getUserJoinedEventIds(
-        user.id,
-        deletedStartedEventIds,
-      );
-    }
-
-    const userJoinedEventIdSet = new Set(userJoinedEventIds);
+    const events = await this.reviewRepository.getEventsByEventIds(eventIds);
 
     const reviewToEventMap = new Map<number, EventData>();
-
-    reviews.forEach(async (review) => {
+    reviews.forEach((review) => {
       const event = events.find((event) => event.id === review.eventId);
       if (!event) {
-        throw new BadRequestException('event가 존재하지 않습니다.');
+        throw new BadRequestException('리뷰에 해당하는 event가 없습니다.');
       }
       reviewToEventMap.set(review.id, event);
     });
@@ -150,13 +139,13 @@ export class ReviewService {
       }
 
       if (!event.clubId) {
-        // 와 만약에 null 이면?
-        if (event.archived)
-          return userJoinedEventIdSet.has(event.id); // 아카이브 상태였던거지..
-        else return true; // 일단 원래부터 클럽이 아니었던거지
+        // 아카이브 상태의 이벤트면, 참여했던 이벤트라면 추가
+        if (event.archived) return userJoinedEvents.has(event.id);
+        return true;
       }
-      // 클럽이 삭제가 안됐으면 괜찮아
-      return userJoinedEventIdSet.has(event.id);
+
+      // 이벤트가 클럽에 연결된 경우, 유저가 해당 클럽에 가입했는지 확인
+      return userJoinedClubs.has(event.clubId);
     });
 
     return filteredReviews;

@@ -40,6 +40,18 @@ export class ReviewRepository {
     });
   }
 
+  async getEventIdsOfUser(userId: number): Promise<number[]> {
+    const events = await this.prisma.eventJoin.findMany({
+      where: {
+        userId,
+      },
+      select: {
+        eventId: true,
+      },
+    });
+    return events.map((event) => event.eventId);
+  }
+
   async getClubIdsOfUser(userId: number): Promise<number[]> {
     const clubs = await this.prisma.clubJoin.findMany({
       where: {

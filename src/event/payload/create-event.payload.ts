@@ -4,7 +4,6 @@ import {
   IsArray,
   IsDate,
   IsInt,
-  IsOptional,
   IsString,
   Min,
   ArrayMinSize,
