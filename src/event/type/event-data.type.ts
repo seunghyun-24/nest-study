@@ -1,4 +1,5 @@
 export type EventData = {
+  archived: boolean;
   id: number;
   title: string;
   description: string;

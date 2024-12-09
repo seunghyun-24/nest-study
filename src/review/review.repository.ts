@@ -86,6 +86,7 @@ export class ReviewRepository {
             id: true,
           },
         },
+        archived: true,
         startTime: true,
         endTime: true,
         maxPeople: true,

@@ -82,7 +82,7 @@ export class ReviewService {
 
     const event = await this.reviewRepository.getEventById(review.eventId);
     if (!event) {
-      // 근데 이건 안 잃어날 텐뎅
+      // 근데 이건 안 일어날 텐뎅
       throw new BadRequestException('Event가 존재하지 않습니다.');
     }
     if (event.clubId) {
@@ -150,9 +150,10 @@ export class ReviewService {
       }
 
       if (!event.clubId) {
-        // 근데 클럽이 아니었던 경우랑.. 삭제된 클럽인 경우를 어떻게 구분하지
-        // 아카이브 된 거 아직 안가져왔구나.. 하..
-        return true;
+        // 와 만약에 null 이면?
+        if (event.archived)
+          return userJoinedEventIdSet.has(event.id); // 아카이브 상태였던거지..
+        else return true; // 일단 원래부터 클럽이 아니었던거지
       }
       // 클럽이 삭제가 안됐으면 괜찮아
       return userJoinedEventIdSet.has(event.id);
