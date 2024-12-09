@@ -192,28 +192,20 @@ export class ClubRepository {
     clubId: number,
     userId: number,
   ): Promise<ClubJoinStatus | null> {
-    const member = await this.prisma.clubJoin.findUnique({
+    const member = await this.prisma.clubJoin.findFirst({
       where: {
-        clubId_userId: {
-          clubId,
-          userId,
+        clubId,
+        userId,
+        user: {
+          deletedAt: null,
         },
       },
       select: {
         status: true,
-        user: {
-          select: {
-            deletedAt: true,
-          },
-        },
       },
     });
 
-    if (member?.user?.deletedAt === null) {
-      return member.status;
-    }
-
-    return null;
+    return member?.status ?? null;
   }
 
   async updateMemberStatus(
