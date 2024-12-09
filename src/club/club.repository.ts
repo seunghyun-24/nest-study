@@ -188,6 +188,44 @@ export class ClubRepository {
     });
   }
 
+  async getClubMemberStatus(
+    clubId: number,
+    userId: number,
+  ): Promise<ClubJoinStatus | null> {
+    const member = await this.prisma.clubJoin.findFirst({
+      where: {
+        clubId,
+        userId,
+        user: {
+          deletedAt: null,
+        },
+      },
+      select: {
+        status: true,
+      },
+    });
+
+    return member?.status ?? null;
+  }
+
+  async updateMemberStatus(
+    clubId: number,
+    userId: number,
+    status: ClubJoinStatus,
+  ): Promise<void> {
+    await this.prisma.clubJoin.update({
+      where: {
+        clubId_userId: {
+          clubId,
+          userId,
+        },
+      },
+      data: {
+        status,
+      },
+    });
+  }
+
   async updateClub(clubId: number, data: UpdateClubData): Promise<ClubData> {
     const updatedClub = await this.prisma.club.update({
       where: { id: clubId },
