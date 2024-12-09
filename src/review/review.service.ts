@@ -14,7 +14,7 @@ import { PutUpdateReviewPayload } from './payload/put-update-review.payload';
 import { PatchUpdateReviewPayload } from './payload/patch-update-review.payload';
 import { UserBaseInfo } from '../auth/type/user-base-info.type';
 import { ReviewData } from './type/review-data.type';
-import { filter } from 'lodash';
+import { EventData } from '../event/type/event-data.type';
 
 @Injectable()
 export class ReviewService {
@@ -112,28 +112,53 @@ export class ReviewService {
     reviews: ReviewData[],
     user: UserBaseInfo,
   ): Promise<ReviewData[]> {
-    const filteredReviews = await Promise.all(
-      reviews.map(async (review) => {
-        const event = await this.reviewRepository.getEventById(review.eventId);
-        if (!event) {
-          throw new NotFoundException('Event가 존재하지 않습니다.');
-        }
+    const eventIds = [...new Set(reviews.map((review) => review.eventId))];
+    const [events, userJoinedClubs] = await Promise.all([
+      this.reviewRepository.getEventsByEventIds(eventIds),
+      this.reviewRepository.getClubIdsOfUser(user.id),
+    ]);
 
-        if (event.clubId) {
-          const userInClub = await this.reviewRepository.isUserJoinedClub(
-            user.id,
-            event.clubId,
-          );
-          if (!userInClub) {
-            return null;
-          }
-        }
+    const now = new Date();
+    const deletedStartedEventIds = events
+      .filter((event) => event.clubId && event.startTime < now)
+      .map((event) => event.id);
 
-        return review;
-      }),
-    );
+    let userJoinedEventIds: number[] = [];
 
-    return filter(filteredReviews, (review) => review !== null);
+    if (deletedStartedEventIds) {
+      userJoinedEventIds = await this.reviewRepository.getUserJoinedEventIds(
+        user.id,
+        deletedStartedEventIds,
+      );
+    }
+
+    const userJoinedEventIdSet = new Set(userJoinedEventIds);
+
+    const reviewToEventMap = new Map<number, EventData>();
+
+    reviews.forEach(async (review) => {
+      const event = events.find((event) => event.id === review.eventId);
+      if (!event) {
+        throw new BadRequestException('event가 존재하지 않습니다.');
+      }
+      reviewToEventMap.set(review.id, event);
+    });
+    const filteredReviews = reviews.filter((review) => {
+      const event = reviewToEventMap.get(review.id);
+      if (!event) {
+        throw new BadRequestException('리뷰에 해당하는 event가 없습니다.');
+      }
+
+      if (!event.clubId) {
+        // 근데 클럽이 아니었던 경우랑.. 삭제된 클럽인 경우를 어떻게 구분하지
+        // 아카이브 된 거 아직 안가져왔구나.. 하..
+        return true;
+      }
+      // 클럽이 삭제가 안됐으면 괜찮아
+      return userJoinedEventIdSet.has(event.id);
+    });
+
+    return filteredReviews;
   }
 
   async putUpdateReview(
