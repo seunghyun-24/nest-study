@@ -19,6 +19,7 @@ export class EventRepository {
         hostId: data.hostId,
         categoryId: data.categoryId,
         clubId: data.clubId,
+        archived: false,
         eventCity: {
           create: data.cityIds.map((cityId) => ({
             cityId: cityId,
@@ -54,6 +55,7 @@ export class EventRepository {
             userId: true,
           },
         },
+        archived: true,
       },
     });
   }
@@ -108,6 +110,7 @@ export class EventRepository {
         startTime: true,
         endTime: true,
         maxPeople: true,
+        archived: true,
       },
     });
   }
@@ -138,6 +141,7 @@ export class EventRepository {
         startTime: true,
         endTime: true,
         maxPeople: true,
+        archived: true,
       },
     });
   }
@@ -229,6 +233,7 @@ export class EventRepository {
         startTime: true,
         endTime: true,
         maxPeople: true,
+        archived: true,
       },
     });
   }
