@@ -50,6 +50,23 @@ export class EventService {
       throw new NotFoundException('주최자가 존재하지 않습니다.');
     }
 
+    if (payload.clubId) {
+      const club = await this.clubRepository.getClubById(payload.clubId);
+      if (!club) {
+        throw new NotFoundException('해당 Club이 존재하지 않습니다.');
+      }
+
+      const isClubMember = await this.clubRepository.getUserIsClubMember(
+        payload.hostId,
+        payload.clubId,
+      );
+      if (!isClubMember) {
+        throw new ConflictException(
+          '클럽 멤버만 클럽 전용 이벤트를 만들 수 있습니다.',
+        );
+      }
+    }
+
     const createData: CreateEventData = {
       hostId: payload.hostId,
       clubId: payload.clubId,
@@ -108,6 +125,16 @@ export class EventService {
     const userCount = await this.eventRepository.getJoinedUserCount(eventId);
     if (event.maxPeople <= userCount) {
       throw new ConflictException('Event 참여인원이 꽉 찼습니다.');
+    }
+
+    if (event.clubId) {
+      const isClubMember = await this.clubRepository.getUserIsClubMember(
+        userId,
+        event.clubId,
+      );
+      if (!isClubMember) {
+        throw new ConflictException('클럽 멤버만 참여할 수 있는 Event입니다.');
+      }
     }
 
     await this.eventRepository.joinUserToEvent(eventId, userId);
@@ -241,54 +268,4 @@ export class EventService {
   //     await this.eventRepository.deleteEvent(event.id);
   //   }
   // }
-
-  async joinClubEvent(
-    clubId: number,
-    eventId: number,
-    userId: number,
-  ): Promise<void> {
-    const user = await this.eventRepository.getUserById(userId);
-    if (!user) {
-      throw new NotFoundException('해당 user는 존재하지 않습니다.');
-    }
-
-    const event = await this.eventRepository.getEventById(eventId);
-    if (!event) {
-      throw new NotFoundException('해당 Event가 존재하지 않습니다.');
-    }
-
-    const club = await this.clubRepository.getClubById(clubId);
-    if (!club) {
-      throw new NotFoundException('해당 Club이 존재하지 않습니다.');
-    }
-
-    if (event.startTime < new Date()) {
-      throw new ConflictException(
-        'Event는 이미 시작되었습니다. 시작한 Event에는 참여할 수 없습니다.',
-      );
-    }
-
-    const joinedCheck = await this.eventRepository.isUserJoinedToEvent(
-      eventId,
-      userId,
-    );
-    if (joinedCheck) {
-      throw new ConflictException('이미 참여한 Event입니다.');
-    }
-
-    const clubJoinedCheck = await this.clubRepository.getUserIsClubMember(
-      userId,
-      clubId,
-    );
-    if (!clubJoinedCheck) {
-      throw new ConflictException('해당 유저는 클럽에 가입하지 않았습니다.');
-    }
-
-    const userCount = await this.eventRepository.getJoinedUserCount(eventId);
-    if (event.maxPeople <= userCount) {
-      throw new ConflictException('Event 참여인원이 꽉 찼습니다.');
-    }
-
-    await this.eventRepository.joinUserToEvent(eventId, userId);
-  }
 }
