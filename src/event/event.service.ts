@@ -13,6 +13,7 @@ import { ClubRepository } from '../club/club.repository';
 import { EventListQuery } from './query/event-list.query';
 import { EventUpdatePayload } from './payload/event-update.payload';
 import { UserBaseInfo } from 'src/auth/type/user-base-info.type';
+import { EventData } from './type/event-data.type';
 
 @Injectable()
 export class EventService {
@@ -118,26 +119,39 @@ export class EventService {
     query: EventListQuery,
     user: UserBaseInfo,
   ): Promise<EventListDto> {
-    let events = await this.eventRepository.getEvents(query);
-    if (query.clubId) {
-      const isUserJoined = await this.eventRepository.isUserJoinedToEvent(
-        query.clubId,
-        user.id,
-      );
-      if (!isUserJoined) {
-        throw new ConflictException(
-          'Event에 참여하지 않은 사용자입니다. 해당하는 Event들의 정보를 볼 수 없습니다.',
-        );
-      }
-    }
-    if (query.archived) {
-      const userJoinedEvents = new Set(
-        await this.eventRepository.getEventIdsOfUser(user.id),
-      );
-      events = events.filter((event) => userJoinedEvents.has(event.id));
-    }
+    const events = await this.eventRepository.getEvents(query); // 보려고 하는 이벤트를 전부 불러오고
+    const filteredEvents = await this.filterEvents(events, user); // 필터링해서 보여줄 이벤트만 뽑아내기
+    // 만약 클럽 Id가 있으면 해당 클럽 멤버인지 보고, 아니면 필터링해서 안보여주기
+    // 만약 archived가 true면 참여한 이벤트인지 확인하고 아니면 필터링해서 안보여주기
+    return EventListDto.from(filteredEvents);
+  }
 
-    return EventListDto.from(events);
+  async filterEvents(
+    events: EventData[],
+    user: UserBaseInfo,
+  ): Promise<EventData[]> {
+    const filteredEvents = events.filter(async (event) => {
+      if (event.clubId) {
+        const isUserJoinedClub = this.clubRepository.getUserIsClubMember(
+          user.id,
+          event.clubId,
+        );
+        if (!isUserJoinedClub) {
+          return false;
+        }
+      }
+      if (event.archived) {
+        const userJoinedEventsIds = new Set(
+          await this.eventRepository.getEventIdsOfUser(user.id),
+        );
+        if (!userJoinedEventsIds.has(event.id)) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    return filteredEvents;
   }
 
   async joinEvent(eventId: number, userId: number): Promise<void> {
