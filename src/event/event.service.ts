@@ -101,6 +101,16 @@ export class EventService {
         );
       }
     }
+    if (event.archived) {
+      const userJoinedEvents = new Set(
+        await this.eventRepository.getEventIdsOfUser(user.id),
+      );
+      if (!userJoinedEvents.has(event.id)) {
+        throw new ConflictException(
+          '해당 유저가 참여했던 이벤트가 아닙니다. 리뷰를 볼 수 없습니다.',
+        );
+      }
+    }
     return EventDto.from(event);
   }
 
@@ -108,7 +118,7 @@ export class EventService {
     query: EventListQuery,
     user: UserBaseInfo,
   ): Promise<EventListDto> {
-    const events = await this.eventRepository.getEvents(query);
+    let events = await this.eventRepository.getEvents(query);
     if (query.clubId) {
       const isUserJoined = await this.eventRepository.isUserJoinedToEvent(
         query.clubId,
@@ -120,6 +130,13 @@ export class EventService {
         );
       }
     }
+    if (query.archived) {
+      const userJoinedEvents = new Set(
+        await this.eventRepository.getEventIdsOfUser(user.id),
+      );
+      events = events.filter((event) => userJoinedEvents.has(event.id));
+    }
+
     return EventListDto.from(events);
   }
 
