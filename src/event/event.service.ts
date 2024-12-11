@@ -130,23 +130,20 @@ export class EventService {
     events: EventData[],
     user: UserBaseInfo,
   ): Promise<EventData[]> {
-    const filteredEvents = events.filter(async (event) => {
-      if (event.clubId) {
-        const isUserJoinedClub = this.clubRepository.getUserIsClubMember(
-          user.id,
-          event.clubId,
-        );
-        if (!isUserJoinedClub) {
-          return false;
-        }
+    // 그럼 이벤트랑 클럽 참여한거 전부 가져온 다음에
+    const userJoinedClubIds = new Set(
+      await this.clubRepository.getClubIdsOfUser(user.id),
+    );
+    const userJoinedEventIds = new Set(
+      await this.eventRepository.getEventIdsOfUser(user.id),
+    );
+    // 필터링 : 클럽 참여 여부 보고, 아카이빙 된건 이벤트 참여 여부 보기!
+    const filteredEvents = events.filter((event) => {
+      if (event.clubId && !userJoinedClubIds.has(event.clubId)) {
+        return false;
       }
-      if (event.archived) {
-        const userJoinedEventsIds = new Set(
-          await this.eventRepository.getEventIdsOfUser(user.id),
-        );
-        if (!userJoinedEventsIds.has(event.id)) {
-          return false;
-        }
+      if (event.archived && !userJoinedEventIds.has(event.id)) {
+        return false;
       }
       return true;
     });
