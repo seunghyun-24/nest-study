@@ -12,6 +12,7 @@ import { EventRepository } from './event.repository';
 import { ClubRepository } from '../club/club.repository';
 import { EventListQuery } from './query/event-list.query';
 import { EventUpdatePayload } from './payload/event-update.payload';
+import { UserBaseInfo } from 'src/auth/type/user-base-info.type';
 
 @Injectable()
 export class EventService {
@@ -84,16 +85,41 @@ export class EventService {
     return EventDto.from(event);
   }
 
-  async getEvent(eventId: number): Promise<EventDto> {
+  async getEvent(eventId: number, user: UserBaseInfo): Promise<EventDto> {
     const event = await this.eventRepository.getEventById(eventId);
     if (!event) {
       throw new NotFoundException('해당 Event가 존재하지 않습니다.');
     }
+    if (event.clubId) {
+      const isUserJoined = await this.eventRepository.isUserJoinedToEvent(
+        eventId,
+        user.id,
+      );
+      if (!isUserJoined) {
+        throw new ConflictException(
+          'Event에 참여하지 않은 사용자입니다. 해당 Event 정보를 볼 수 없습니다.',
+        );
+      }
+    }
     return EventDto.from(event);
   }
 
-  async getEvents(query: EventListQuery): Promise<EventListDto> {
+  async getEvents(
+    query: EventListQuery,
+    user: UserBaseInfo,
+  ): Promise<EventListDto> {
     const events = await this.eventRepository.getEvents(query);
+    if (query.clubId) {
+      const isUserJoined = await this.eventRepository.isUserJoinedToEvent(
+        query.clubId,
+        user.id,
+      );
+      if (!isUserJoined) {
+        throw new ConflictException(
+          'Event에 참여하지 않은 사용자입니다. 해당하는 Event들의 정보를 볼 수 없습니다.',
+        );
+      }
+    }
     return EventListDto.from(events);
   }
 
@@ -248,24 +274,4 @@ export class EventService {
 
     await this.eventRepository.deleteEvent(eventId);
   }
-
-  // async getClubEvents(clubId: number): Promise<ClubEventListDto> {
-  //   const events = await this.eventRepository.getClubEvents(clubId);
-  //   return ClubEventListDto.from(events);
-  // }
-
-  // async deleteClubEvents(clubId: number): Promise<void> {
-  //   const events = await this.eventRepository.getClubEvents(clubId);
-  //   for (const event of events) {
-  //     if (event.startTime < new Date()) {
-  //       throw new ConflictException(
-  //         '이미 시작된 클럽 전용 Event를 삭제할 수 없습니다. 클럽 삭제가 제한됩니다.',
-  //       );
-  //     }
-  //   }
-
-  //   for (const event of events) {
-  //     await this.eventRepository.deleteEvent(event.id);
-  //   }
-  // }
 }

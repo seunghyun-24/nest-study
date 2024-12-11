@@ -3,6 +3,7 @@ import {
   ApiOperation,
   ApiOkResponse,
   ApiNoContentResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { EventService } from './event.service';
 import {
@@ -16,6 +17,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { EventDto, EventListDto } from './dto/event.dto';
 import { CreateEventPayload } from './payload/create-event.payload';
@@ -23,6 +25,9 @@ import { EventJoinPayload } from './payload/event-join.payload';
 import { EventOutPayload } from './payload/event-out.payload';
 import { EventListQuery } from './query/event-list.query';
 import { EventUpdatePayload } from './payload/event-update.payload';
+import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorator/user.decorator';
+import { UserBaseInfo } from '../auth/type/user-base-info.type';
 
 @Controller('events')
 export class EventController {
@@ -37,18 +42,26 @@ export class EventController {
 
   @Get(':eventId')
   @ApiOperation({ summary: '특정 모임을 조회합니다.' })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOkResponse({ type: EventDto })
   async getEvent(
     @Param('eventId', ParseIntPipe) eventId: number,
+    @CurrentUser() user: UserBaseInfo,
   ): Promise<EventDto> {
-    return this.eventService.getEvent(eventId);
+    return this.eventService.getEvent(eventId, user);
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: '조건에 따른 모임 목록을 조회합니다.' })
   @ApiOkResponse({ type: EventListDto })
-  async getEvents(@Query() query: EventListQuery): Promise<EventListDto> {
-    return this.eventService.getEvents(query);
+  async getEvents(
+    @Query() query: EventListQuery,
+    @CurrentUser() user: UserBaseInfo,
+  ): Promise<EventListDto> {
+    return this.eventService.getEvents(query, user);
   }
 
   @Post(':eventId/join')
