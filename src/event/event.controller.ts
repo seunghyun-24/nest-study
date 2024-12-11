@@ -17,7 +17,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { EventDto, EventListDto, ClubEventListDto } from './dto/event.dto';
+import { EventDto, EventListDto } from './dto/event.dto';
 import { CreateEventPayload } from './payload/create-event.payload';
 import { EventJoinPayload } from './payload/event-join.payload';
 import { EventOutPayload } from './payload/event-out.payload';

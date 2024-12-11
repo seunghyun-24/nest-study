@@ -9,12 +9,16 @@ import { CreateEventData } from './type/create-event-data.type';
 import { UpdateEventData } from './type/update-event-data.type';
 import { EventDto, EventListDto } from './dto/event.dto';
 import { EventRepository } from './event.repository';
+import { ClubRepository } from '../club/club.repository';
 import { EventListQuery } from './query/event-list.query';
 import { EventUpdatePayload } from './payload/event-update.payload';
 
 @Injectable()
 export class EventService {
-  constructor(private readonly eventRepository: EventRepository) {}
+  constructor(
+    private readonly eventRepository: EventRepository,
+    private readonly clubRepository: ClubRepository,
+  ) {}
 
   async createEvent(payload: CreateEventPayload): Promise<EventDto> {
     const isCategoryExist = await this.eventRepository.isCategoryExist(
@@ -44,6 +48,23 @@ export class EventService {
     const user = await this.eventRepository.getUserById(payload.hostId);
     if (!user) {
       throw new NotFoundException('주최자가 존재하지 않습니다.');
+    }
+
+    if (payload.clubId) {
+      const club = await this.clubRepository.getClubById(payload.clubId);
+      if (!club) {
+        throw new NotFoundException('해당 Club이 존재하지 않습니다.');
+      }
+
+      const isClubMember = await this.clubRepository.getUserIsClubMember(
+        payload.hostId,
+        payload.clubId,
+      );
+      if (!isClubMember) {
+        throw new ConflictException(
+          '클럽 멤버만 클럽 전용 이벤트를 만들 수 있습니다.',
+        );
+      }
     }
 
     const createData: CreateEventData = {
@@ -104,6 +125,16 @@ export class EventService {
     const userCount = await this.eventRepository.getJoinedUserCount(eventId);
     if (event.maxPeople <= userCount) {
       throw new ConflictException('Event 참여인원이 꽉 찼습니다.');
+    }
+
+    if (event.clubId) {
+      const isClubMember = await this.clubRepository.getUserIsClubMember(
+        userId,
+        event.clubId,
+      );
+      if (!isClubMember) {
+        throw new ConflictException('클럽 멤버만 참여할 수 있는 Event입니다.');
+      }
     }
 
     await this.eventRepository.joinUserToEvent(eventId, userId);
