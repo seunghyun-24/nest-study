@@ -98,7 +98,14 @@ export class ReviewService {
         throw new ConflictException('해당 유저가 클럽에 가입하지 않았습니다.');
       }
     }
-
+    if (event.archived) {
+      const userJoinedEvents = new Set(
+        await this.reviewRepository.getEventIdsOfUser(user.id),
+      );
+      if (!userJoinedEvents.has(event.id)) {
+        throw new ConflictException('해당 유저가 참여한 이벤트가 아닙니다.');
+      }
+    }
     return ReviewDto.from(review);
   }
 
@@ -120,6 +127,16 @@ export class ReviewService {
         if (!userInClub) {
           throw new ConflictException(
             '해당 유저가 클럽에 가입하지 않았습니다. 리뷰를 볼 수 없습니다.',
+          );
+        }
+      }
+      if (event.archived) {
+        const userJoinedEvents = new Set(
+          await this.reviewRepository.getEventIdsOfUser(user.id),
+        );
+        if (!userJoinedEvents.has(event.id)) {
+          throw new ConflictException(
+            '해당 유저가 참여한 이벤트가 아닙니다. 리뷰를 볼 수 없습니다.',
           );
         }
       }
