@@ -5,7 +5,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ReviewRepository } from './review.repository';
-import { EventRepository } from '../event/event.repository';
 import { CreateReviewPayload } from './payload/create-review.payload';
 import { ReviewDto, ReviewListDto } from './dto/review.dto';
 import { CreateReviewData } from './type/create-review-data.type';
@@ -19,10 +18,7 @@ import { EventData } from '../event/type/event-data.type';
 
 @Injectable()
 export class ReviewService {
-  constructor(
-    private readonly reviewRepository: ReviewRepository,
-    private readonly eventRepository: EventRepository,
-  ) {}
+  constructor(private readonly reviewRepository: ReviewRepository) {}
 
   async createReview(
     payload: CreateReviewPayload,
@@ -106,24 +102,6 @@ export class ReviewService {
     query: ReviewQuery,
     user: UserBaseInfo,
   ): Promise<ReviewListDto> {
-    if (query.eventId) {
-      const event = await this.eventRepository.getEventById(query.eventId);
-      if (!event) {
-        // 안 일어날 듯?
-        throw new BadRequestException('Event가 존재하지 않습니다.');
-      }
-      if (event.clubId) {
-        const userInClub = await this.reviewRepository.isUserJoinedClub(
-          user.id,
-          event.clubId,
-        );
-        if (!userInClub) {
-          throw new ConflictException(
-            '해당 유저가 클럽에 가입하지 않았습니다. 리뷰를 볼 수 없습니다.',
-          );
-        }
-      }
-    }
     const reviews = await this.reviewRepository.getReviews(query);
     const filteredReviews = await this.filterClubEventReview(reviews, user);
 
