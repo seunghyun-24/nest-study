@@ -115,6 +115,18 @@ export class EventRepository {
     });
   }
 
+  async getEventIdsOfUser(userId: number): Promise<number[]> {
+    const events = await this.prisma.eventJoin.findMany({
+      where: {
+        userId,
+      },
+      select: {
+        eventId: true,
+      },
+    });
+    return events.map((event) => event.eventId);
+  }
+
   async getEvents(query: EventListQuery): Promise<EventData[]> {
     return await this.prisma.event.findMany({
       where: {

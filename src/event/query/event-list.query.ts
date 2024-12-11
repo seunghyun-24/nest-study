@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class EventListQuery {
@@ -38,4 +38,13 @@ export class EventListQuery {
     type: Number,
   })
   clubId?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  @ApiPropertyOptional({
+    description: 'archived',
+    type: Boolean,
+  })
+  archived?: boolean;
 }

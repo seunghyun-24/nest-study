@@ -76,6 +76,18 @@ export class ClubRepository {
     return !!isClubMember;
   }
 
+  async getClubIdsOfUser(userId: number): Promise<number[]> {
+    const clubs = await this.prisma.clubJoin.findMany({
+      where: {
+        userId,
+      },
+      select: {
+        clubId: true,
+      },
+    });
+    return clubs.map((club) => club.clubId);
+  }
+
   async getClubById(clubId: number): Promise<ClubData | null> {
     const club = await this.prisma.club.findUnique({
       where: { id: clubId },
